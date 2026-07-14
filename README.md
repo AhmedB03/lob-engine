@@ -2,8 +2,8 @@
 
 A high-performance research engine for Level-2 market data, built on a single
 hard constraint: **no O(n_events) work ever happens in the Python
-interpreter.** Every stage — feed generation, feature extraction, execution
-simulation — is expressed as vectorized NumPy/Pandas kernels that stream over
+interpreter.** Every stage, feed generation, feature extraction, execution
+simulation, is expressed as vectorized NumPy/Pandas kernels that stream over
 contiguous arrays, the way the hardware wants to be fed.
 
 ## Why vectorization is the whole point
@@ -13,8 +13,8 @@ Python's interpreter dispatches ~10⁷ simple ops/sec; NumPy kernels move
 cache-line-friendly memory with no per-element boxing or refcounting. At
 tick-data scale (10⁶–10⁹ events/day/instrument) that is the difference
 between an interactive research loop and an overnight batch job. The
-discipline this imposes — thinking in whole-array transformations, prefix
-sums instead of running state, `searchsorted` instead of event loops — is the
+discipline this imposes, thinking in whole-array transformations, prefix
+sums instead of running state, `searchsorted` instead of event loops,is the
 same mental model that writes fast C++.
 
 ## Architecture
@@ -76,7 +76,7 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
 - **Integer tick grid.** Prices are integer tick counts until the final
   float conversion, so books cannot be crossed by floating-point drift and
   the generator's invariants (monotone ladders, `ask − bid ≡ spread`) are
-  exact. Timestamps are int64 nanoseconds — exact arithmetic for the latency
+  exact. Timestamps are int64 nanoseconds, exact arithmetic for the latency
   modeling coming in Phase 3.
 - **Memory before FLOPs.** Vectorized workloads are memory-bandwidth-bound,
   so `schema.optimize_memory` downcasts every column to the smallest dtype
@@ -84,7 +84,7 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
   if the worst-case round-trip error stays under half a tick).
 - **Signals with a story.** OBI is the normalized resting-liquidity
   imbalance in [−1, 1]; the micro-price weights the touch quotes by
-  *opposite* queue sizes — the thin side gets consumed first, so
+  *opposite* queue sizes, the thin side gets consumed first, so
   `micro − mid` is a directional expectation, and it is the signal Phase 3
   will trade.
 - **Known-zero-alpha testbed.** The synthetic mid walk is independent of the
@@ -98,7 +98,7 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
   serial dependency, and the "obvious" closed-form vectorization
   (`φ^t · cumsum(ε·φ^−t)`) overflows float64 after ~14k steps at φ = 0.95.
   The recursion *is* a first-order IIR filter, so `scipy.signal.lfilter`
-  evaluates it in one compiled O(n) pass — initialized from the stationary
+  evaluates it in one compiled O(n) pass, initialized from the stationary
   distribution so no burn-in is needed. Tests pin the exact recursion
   against a Python-loop reference and the stationary moments
   (mean, variance `σ²/(1−φ²)`, lag-1 autocorrelation ≈ φ).
@@ -107,15 +107,15 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
   Both run on one primitive: prefix sums make any window sum an O(1)
   difference, and `np.searchsorted` finds all n wall-clock window starts in
   one vectorized binary search. Window ends follow *event order*, so no
-  event ever sees a return that arrived after it — even inside the same
+  event ever sees a return that arrived after it, even inside the same
   nanosecond burst.
 - **Honest benchmarking.** Pandas `.rolling("1s")` produces identical
   numbers (asserted in tests, |diff| ~1e-15) and is ~2x faster for a single
-  statistic — its Cython indexer finds bounds with an O(n) two-pointer scan,
+  statistic, its Cython indexer finds bounds with an O(n) two-pointer scan,
   which NumPy has no primitive for. Our engine amortizes: bounds are
   computed once (`wallclock_window_starts`) and reused by any
   prefix-summable statistic. The gap and its cause are documented, measured,
-  and queued as a Phase 4 target — a rigged benchmark would be worse than a
+  and queued as a Phase 4 target, a rigged benchmark would be worse than a
   lost one.
 - **NaN over fabrication.** Windows with insufficient history (post-silence,
   warm-up) yield NaN, never 0: "no information" and "zero volatility" are
@@ -143,7 +143,7 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
 - **The leak detector caught something real.** The quoted midpoint is
   `efficient price + (spread mod 2)/2` ticks, and under AR(1) spreads the
   parity term mean-reverts: quoted mids *predictably bounce*. A fade-the-
-  last-move probe shows t-stat ≈ +81 pre-cost at zero latency — genuine
+  last-move probe shows t-stat ≈ +81 pre-cost at zero latency, genuine
   bid-ask bounce, decaying to ~0 by 10ms of latency and always losing
   post-cost. The martingale null therefore runs on a bounce-free
   constant-spread control feed, the bounce economics are preserved as
