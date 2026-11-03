@@ -89,6 +89,8 @@ def log_returns(prices: npt.ArrayLike) -> _F64:
         raise ValueError(f"prices must be 1-dimensional, got shape {values.shape}")
     if values.size < 2:
         raise ValueError(f"need at least 2 prices, got {values.size}")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("prices must be finite for log returns")
     if not np.all(values > 0.0):
         raise ValueError("prices must be strictly positive for log returns")
     return np.diff(np.log(values))

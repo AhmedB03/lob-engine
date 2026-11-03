@@ -225,6 +225,25 @@ class TestWallClockVol:
 
 
 class TestNumericalStability:
+    @pytest.mark.parametrize("bad_price", [np.inf, -np.inf, np.nan])
+    @pytest.mark.parametrize("position", [0, 1, 3])
+    def test_nonfinite_prices_rejected(self, bad_price, position):
+        prices = np.array([100., 101., 102., 103.])
+        prices[position] = bad_price
+        timestamps = np.arange(4, dtype=np.int64)
+        starts = wallclock_window_starts(timestamps, 2)
+        # The direct helper and both clocks, including reused bounds, share
+        # the same validation instead of poisoning later prefix sums.
+        calls = [
+            lambda: log_returns(prices),
+            lambda: realized_vol_events(prices, 2),
+            lambda: realized_vol_wallclock(prices, timestamps, 2),
+            lambda: realized_vol_wallclock(prices, timestamps, 2, starts=starts),
+        ]
+        for call in calls:
+            with pytest.raises(ValueError, match="finite"):
+                call()
+
     def test_demeaned_never_negative_under_cancellation(self):
         # Identical returns make the demeaned sum of squares exactly 0 in
         # real arithmetic; prefix-sum differencing can land at -1e-20 in
