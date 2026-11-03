@@ -1,8 +1,4 @@
-"""Benchmark layer (Phase 4): vectorized vs. naive-loop comparisons.
+"""Correctness-gated volatility benchmarks; see scripts/run_benchmarks.py.
 
-Planned modules:
-* ``benchmarks.py`` — timeit/cProfile harness pitting each vectorized kernel
-  against a straightforward Python-loop reference implementation, with
-  throughput (events/sec) and speedup tables, plus a discussion of memory
-  bandwidth and cache behavior (float32 vs float64, integer ticks vs floats).
+Compiled bounds scans and cache/bandwidth profiling remain future work.
 """
