@@ -153,9 +153,32 @@ Requires Python ≥ 3.10, NumPy ≥ 1.26, Pandas ≥ 2.1, SciPy ≥ 1.11.
 
 ## Roadmap
 
+### Reproducible volatility benchmarks
+
+Install the project with `python -m pip install -e ".[dev]"`, then run:
+
+```bash
+python scripts/run_benchmarks.py --sizes 1000 10000 100000 --repeats 5 --output benchmark-results/local.json
+```
+
+The harness compares a Python window-reduction loop, NumPy prefix sums, and
+pandas rolling sums on identical seeded regular, burst, and gapped feeds.
+Every full output (including NaN positions) must match the loop reference
+before timing begins. Each method gets one warm-up/validation call; timed
+execution order rotates between repetitions. Reports include all samples,
+median/minimum latency, throughput, input bytes, dependency versions,
+platform details, seed, and thread environment settings.
+
+Timings include return calculation and window setup for each method. They
+exclude data generation, correctness checks, and serialization. Input bytes
+are not peak memory usage. Results depend on hardware and background load;
+there are no speed thresholds in tests and no promise that NumPy beats pandas.
+This is the first part of Phase 4: compiled O(n) bounds scans, other kernels,
+and cache/bandwidth profiling remain future work.
+
 | Phase | Deliverable | Status |
 |------:|-------------|--------|
 | 1 | Data pipeline, synthetic L2 generator, OBI + micro-price | ✅ |
 | 2 | AR(1) spread process, dual-clock realized volatility | ✅ |
 | 3 | Vectorized backtester: latency, spread costs, ledger, leak detector | ✅ |
-| 4 | Benchmark suite: vectorized vs loops vs pandas, O(n) bounds scan, cache/bandwidth analysis | 🔜 |
+| 4 | Volatility benchmark harness shipped; O(n) bounds scan and cache/bandwidth analysis remain | In progress |
